@@ -17,7 +17,7 @@ import java.time.LocalDate;
 @Table(name = "sync_job")
 public class SyncJob extends BaseEntity {
 
-  @ManyToOne(fetch = FetchType.LAZY)
+  @ManyToOne(fetch = FetchType.LAZY, optional = false)
   @JoinColumn(name = "index_info_id", nullable = false)
   private IndexInfo indexInfo;
 
