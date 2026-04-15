@@ -1,4 +1,6 @@
 package com.sprint.mission.findex.domain.syncjob.entity;
 
-public class JobType {
+public enum JobType {
+  INDEX_INFO,
+  INDEX_DATA
 }
