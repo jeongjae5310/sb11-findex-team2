@@ -29,8 +29,9 @@ public interface SyncJobRepository extends JpaRepository<SyncJob, UUID> {
       "AND (:result IS NULL OR s.result = :result) " +
       "AND (:targetDate IS NULL OR s.targetDate = :targetDate) " +
       "AND (:worker IS NULL OR s.worker LIKE %:worker%) " +
-      "AND (:lastJobTime IS NULL OR s.jobTime < :lastJobTime) " +
-      "ORDER BY s.jobTime DESC")
+      "AND (:lastJobTime IS NULL OR s.jobTime < :lastJobTime " +
+      "OR (s.jobTime = :lastJobTime AND s.id < :lastId)) " +
+      "ORDER BY s.jobTime DESC, s.id DESC")
   List<SyncJob> searchSyncJobs(
       @Param("jobType") JobType jobType,
       @Param("indexId") UUID indexId,
@@ -41,3 +42,5 @@ public interface SyncJobRepository extends JpaRepository<SyncJob, UUID> {
       Pageable pageable
   );
 }
+
+
