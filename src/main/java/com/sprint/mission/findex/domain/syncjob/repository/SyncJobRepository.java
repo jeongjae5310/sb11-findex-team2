@@ -1,6 +1,6 @@
 package com.sprint.mission.findex.domain.syncjob.repository;
 
-import com.sprint.mission.findex.domain.syncjob.entity.JobResult;
+import com.sprint.mission.findex.domain.syncjob.dto.CursorPageResponseSyncJobDto;
 import com.sprint.mission.findex.domain.syncjob.entity.JobType;
 import com.sprint.mission.findex.domain.syncjob.entity.SyncJob;
 import org.springframework.data.domain.Pageable;
@@ -24,21 +24,19 @@ public interface SyncJobRepository extends JpaRepository<SyncJob, UUID> {
 
   @Query("SELECT s FROM SyncJob s " +
       "LEFT JOIN FETCH s.indexInfo " +
-      "WHERE (:jobType IS NULL OR s.jobType = :jobType) " +
-      "AND (:indexId IS NULL OR s.indexInfo.id = :indexId) " +
-      "AND (:result IS NULL OR s.result = :result) " +
-      "AND (:targetDate IS NULL OR s.targetDate = :targetDate) " +
-      "AND (:worker IS NULL OR s.worker LIKE %:worker%) " +
+      "WHERE (:#{#condition.jobType} IS NULL OR s.jobType = :#{#condition.jobType}) " +
+      "AND (:#{#condition.indexInfoId} IS NULL OR s.indexInfo.id = :#{#condition.indexInfoId}) " +
+      "AND (:#{#condition.result} IS NULL OR s.result = :#{#condition.result}) " +
+      "AND (:#{#condition.startDate} IS NULL OR s.targetDate >= :#{#condition.startDate}) " +
+      "AND (:#{#condition.endDate} IS NULL OR s.targetDate <= :#{#condition.endDate}) " +
+      "AND (:#{#condition.worker} IS NULL OR s.worker LIKE %:#{#condition.worker}%) " +
       "AND (:lastJobTime IS NULL OR s.jobTime < :lastJobTime " +
       "OR (s.jobTime = :lastJobTime AND s.id < :lastId)) " +
       "ORDER BY s.jobTime DESC, s.id DESC")
   List<SyncJob> searchSyncJobs(
-      @Param("jobType") JobType jobType,
-      @Param("indexId") UUID indexId,
-      @Param("result") JobResult result,
-      @Param("targetDate") LocalDate targetDate,
-      @Param("worker") String worker,
+      @Param("condition") CursorPageResponseSyncJobDto condition,
       @Param("lastJobTime") Instant lastJobTime,
+      @Param("lastId") UUID lastId,
       Pageable pageable
   );
 }
