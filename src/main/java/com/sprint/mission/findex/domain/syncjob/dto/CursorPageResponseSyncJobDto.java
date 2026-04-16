@@ -7,7 +7,7 @@ import java.time.LocalDate;
 import java.util.UUID;
 
 // 연동 이력 검색 필터용
-public record SyncJobSearchCondition(
+public record CursorPageResponseSyncJobDto(
     JobType jobType,
     UUID indexInfoId,
     LocalDate baseDateFrom,
@@ -17,7 +17,7 @@ public record SyncJobSearchCondition(
     Instant jobTimeTo,
     JobResult status
 ) {
-  public SyncJobSearchCondition {
+  public CursorPageResponseSyncJobDto {
     if (baseDateFrom != null && baseDateTo != null && baseDateFrom.isAfter(baseDateTo)) {
       throw new IllegalArgumentException("대상 날짜(부터)는 대상 날짜(까지)보다 미래일 수 없습니다.");
     }
