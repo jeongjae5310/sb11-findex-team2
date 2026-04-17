@@ -44,10 +44,12 @@ public class SyncJobController implements SyncJobApi {
   public ResponseEntity<CursorPageResponse<SyncJobResponse>> getSyncJobHistory(
       @Valid @ParameterObject @ModelAttribute SyncJobSearchCondition condition,
       @RequestParam(required = false) UUID cursor,
+      @RequestParam(defaultValue = "jobTime") String sortField,
+      @RequestParam(defaultValue = "desc") String sortDirection,
       @RequestParam(defaultValue = "10") int size) {
 
     CursorPageResponse<SyncJobResponse> response = syncJobService.getSyncJobHistory(
-        condition, cursor, size
+        condition, cursor, sortField, sortDirection, size
     );
 
     return ResponseEntity.ok(response);
