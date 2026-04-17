@@ -21,6 +21,7 @@ import org.springframework.data.domain.PageRequest;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -95,9 +96,15 @@ public class SyncJobServiceImpl implements SyncJobService {
   public CursorPageResponse<SyncJobResponse> getSyncJobHistory(
       SyncJobSearchCondition condition,
       UUID cursor,
+      String sortField,
+      String sortDirection,
       int size) {
 
-    PageRequest pageRequest = PageRequest.of(0, size + 1);
+    Sort.Direction direction = "asc".equalsIgnoreCase(sortDirection) ? Sort.Direction.ASC : Sort.Direction.DESC;
+
+    String activeSortField = (sortField != null && !sortField.isBlank()) ? sortField : "jobTime";
+
+    PageRequest pageRequest = PageRequest.of(0, size + 1, Sort.by(direction, activeSortField));
 
     List<SyncJob> syncJobs = syncJobRepository.searchSyncJobs(condition, cursor, pageRequest);
 
@@ -108,11 +115,10 @@ public class SyncJobServiceImpl implements SyncJobService {
         .map(SyncJobResponse::from)
         .toList();
 
-    String nextCursor = null;
-
-    if (hasNext && !content.isEmpty()) {
+    UUID nextCursor = null;
+    if (!content.isEmpty()) {
       SyncJobResponse lastElement = content.get(content.size() - 1);
-      nextCursor = lastElement.id().toString();
+      nextCursor = lastElement.id();
     }
 
     return CursorPageResponse.of(

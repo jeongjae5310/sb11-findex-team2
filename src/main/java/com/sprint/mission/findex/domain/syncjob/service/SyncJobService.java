@@ -13,6 +13,7 @@ public interface SyncJobService {
   CursorPageResponse<SyncJobResponse> getSyncJobHistory(
       SyncJobSearchCondition condition,
       UUID cursor,
-      int size
-  );
+      String sortField,
+      String sortDirection,
+      int size);
 }
