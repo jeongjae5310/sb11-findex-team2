@@ -29,13 +29,9 @@ public class SyncJobRepositoryImpl implements SyncJobCustomRepository {
   private final JPAQueryFactory queryFactory;
 
   @Override
-  public List<SyncJob> searchSyncJobs(SyncJobSearchCondition condition, UUID cursorId, Pageable pageable) {
+  public List<SyncJob> searchSyncJobs(SyncJobSearchCondition condition, String cursor, UUID idAfter, Pageable pageable) {
 
-    SyncJob cursorJob = null;
-    if (cursorId != null) {
-      cursorJob = queryFactory.selectFrom(syncJob).where(syncJob.id.eq(cursorId)).fetchOne();
-    }
-
+    // 🚨 서브쿼리 제거됨! 프론트가 준 값으로 바로 조회 시작
     return queryFactory
         .selectFrom(syncJob)
         .leftJoin(syncJob.indexInfo, indexInfo).fetchJoin()
@@ -48,35 +44,37 @@ public class SyncJobRepositoryImpl implements SyncJobCustomRepository {
             containsWorker(condition.worker()),
             goeJobTimeFrom(condition.jobTimeFrom()),
             loeJobTimeTo(condition.jobTimeTo()),
-            getCursorCondition(cursorJob, pageable) //
+            getCursorCondition(cursor, idAfter, pageable) // 🚨 변경된 메서드 호출
         )
-        .orderBy(getOrderSpecifiers(pageable)) //
+        .orderBy(getOrderSpecifiers(pageable))
         .limit(pageable.getPageSize())
         .fetch();
   }
 
-  private BooleanExpression getCursorCondition(SyncJob cursorJob, Pageable pageable) {
-    if (cursorJob == null) return null;
+  private BooleanExpression getCursorCondition(String cursor, UUID idAfter, Pageable pageable) {
+    if (cursor == null || cursor.isBlank() || idAfter == null) return null;
 
     Sort.Order order = pageable.getSort().isSorted() ? pageable.getSort().iterator().next() : Sort.Order.desc("jobTime");
     String property = order.getProperty();
     boolean isAsc = order.isAscending();
 
     if ("targetDate".equals(property)) {
+      LocalDate targetDateCursor = LocalDate.parse(cursor);
       if (isAsc) {
-        return syncJob.targetDate.gt(cursorJob.getTargetDate())
-            .or(syncJob.targetDate.eq(cursorJob.getTargetDate()).and(syncJob.id.gt(cursorJob.getId())));
+        return syncJob.targetDate.gt(targetDateCursor)
+            .or(syncJob.targetDate.eq(targetDateCursor).and(syncJob.id.gt(idAfter)));
       } else {
-        return syncJob.targetDate.lt(cursorJob.getTargetDate())
-            .or(syncJob.targetDate.eq(cursorJob.getTargetDate()).and(syncJob.id.lt(cursorJob.getId())));
+        return syncJob.targetDate.lt(targetDateCursor)
+            .or(syncJob.targetDate.eq(targetDateCursor).and(syncJob.id.lt(idAfter)));
       }
     } else {
+      Instant jobTimeCursor = Instant.parse(cursor);
       if (isAsc) {
-        return syncJob.jobTime.gt(cursorJob.getJobTime())
-            .or(syncJob.jobTime.eq(cursorJob.getJobTime()).and(syncJob.id.gt(cursorJob.getId())));
+        return syncJob.jobTime.gt(jobTimeCursor)
+            .or(syncJob.jobTime.eq(jobTimeCursor).and(syncJob.id.gt(idAfter)));
       } else {
-        return syncJob.jobTime.lt(cursorJob.getJobTime())
-            .or(syncJob.jobTime.eq(cursorJob.getJobTime()).and(syncJob.id.lt(cursorJob.getId())));
+        return syncJob.jobTime.lt(jobTimeCursor)
+            .or(syncJob.jobTime.eq(jobTimeCursor).and(syncJob.id.lt(idAfter)));
       }
     }
   }

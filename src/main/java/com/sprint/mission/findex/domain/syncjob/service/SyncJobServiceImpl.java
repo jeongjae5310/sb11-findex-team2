@@ -103,18 +103,17 @@ public class SyncJobServiceImpl implements SyncJobService {
   @Transactional(readOnly = true)
   public CursorPageResponse<SyncJobResponse> getSyncJobHistory(
       SyncJobSearchCondition condition,
-      UUID cursor,
+      String cursor,
+      UUID idAfter,
       String sortField,
       String sortDirection,
       int size) {
 
     Sort.Direction direction = "asc".equalsIgnoreCase(sortDirection) ? Sort.Direction.ASC : Sort.Direction.DESC;
-
     String activeSortField = (sortField != null && !sortField.isBlank()) ? sortField : "jobTime";
-
     PageRequest pageRequest = PageRequest.of(0, size + 1, Sort.by(direction, activeSortField));
 
-    List<SyncJob> syncJobs = syncJobRepository.searchSyncJobs(condition, cursor, pageRequest);
+    List<SyncJob> syncJobs = syncJobRepository.searchSyncJobs(condition, cursor, idAfter, pageRequest);
 
     boolean hasNext = syncJobs.size() > size;
 
@@ -123,16 +122,24 @@ public class SyncJobServiceImpl implements SyncJobService {
         .map(SyncJobResponse::from)
         .toList();
 
-    UUID nextCursor = null;
+    String nextCursor = null;
+    UUID nextIdAfter = null;
+
     if (!content.isEmpty()) {
       SyncJobResponse lastElement = content.get(content.size() - 1);
-      nextCursor = lastElement.id();
+      nextIdAfter = lastElement.id();
+
+      if ("targetDate".equals(activeSortField)) {
+        nextCursor = lastElement.targetDate().toString();
+      } else {
+        nextCursor = lastElement.jobTime().toString();
+      }
     }
 
     return CursorPageResponse.of(
         content,
         nextCursor,
-        null,
+        nextIdAfter,
         size,
         null,
         hasNext

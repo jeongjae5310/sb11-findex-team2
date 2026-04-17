@@ -24,10 +24,11 @@ public interface SyncJobApi {
       @Valid @RequestBody IndexDataSyncRequest request,
       HttpServletRequest servletRequest);
 
-  @Operation(summary = "연동 작업 목록 조회", description = "ID 기반 커서를 사용하여 지수 데이터 연동 이력을 페이징 조회합니다.")
+  @Operation(summary = "연동 작업 목록 조회", description = "정렬값(cursor)과 ID(idAfter) 기반 복합 커서를 사용하여 연동 이력을 페이징 조회합니다.")
   ResponseEntity<CursorPageResponse<SyncJobResponse>> getSyncJobHistory(
       @Valid @ParameterObject @ModelAttribute SyncJobSearchCondition condition,
-      @RequestParam(required = false) UUID cursor,
+      @RequestParam(required = false) String cursor,
+      @RequestParam(required = false) UUID idAfter,
       @RequestParam(defaultValue = "jobTime") String sortField,
       @RequestParam(defaultValue = "desc") String sortDirection,
       @RequestParam(defaultValue = "10") int size);

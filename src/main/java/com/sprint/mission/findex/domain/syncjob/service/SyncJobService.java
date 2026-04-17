@@ -12,7 +12,8 @@ public interface SyncJobService {
   void syncIndexData(List<UUID> indexInfoIds, LocalDate baseDateFrom, LocalDate baseDateTo, String workerIp);
   CursorPageResponse<SyncJobResponse> getSyncJobHistory(
       SyncJobSearchCondition condition,
-      UUID cursor,
+      String cursor,
+      UUID idAfter,
       String sortField,
       String sortDirection,
       int size);

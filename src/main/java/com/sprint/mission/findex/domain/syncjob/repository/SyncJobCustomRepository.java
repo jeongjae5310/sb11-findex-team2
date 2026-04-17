@@ -8,5 +8,5 @@ import java.util.List;
 import java.util.UUID;
 
 public interface SyncJobCustomRepository {
-  List<SyncJob> searchSyncJobs(SyncJobSearchCondition condition, UUID cursor, Pageable pageable);
+  List<SyncJob> searchSyncJobs(SyncJobSearchCondition condition, String cursor, UUID idAfter, Pageable pageable);
 }
