@@ -31,7 +31,6 @@ public class SyncJobRepositoryImpl implements SyncJobCustomRepository {
   @Override
   public List<SyncJob> searchSyncJobs(SyncJobSearchCondition condition, String cursor, UUID idAfter, Pageable pageable) {
 
-    // 🚨 서브쿼리 제거됨! 프론트가 준 값으로 바로 조회 시작
     return queryFactory
         .selectFrom(syncJob)
         .leftJoin(syncJob.indexInfo, indexInfo).fetchJoin()
@@ -44,7 +43,7 @@ public class SyncJobRepositoryImpl implements SyncJobCustomRepository {
             containsWorker(condition.worker()),
             goeJobTimeFrom(condition.jobTimeFrom()),
             loeJobTimeTo(condition.jobTimeTo()),
-            getCursorCondition(cursor, idAfter, pageable) // 🚨 변경된 메서드 호출
+            getCursorCondition(cursor, idAfter, pageable)
         )
         .orderBy(getOrderSpecifiers(pageable))
         .limit(pageable.getPageSize())
