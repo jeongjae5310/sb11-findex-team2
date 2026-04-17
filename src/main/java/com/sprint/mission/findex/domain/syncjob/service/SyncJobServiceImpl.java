@@ -1,5 +1,6 @@
 package com.sprint.mission.findex.domain.syncjob.service;
 
+import com.sprint.mission.findex.domain.indexdata.mapper.IndexDataMapper;
 import com.sprint.mission.findex.domain.indexinfo.entity.IndexInfo;
 import com.sprint.mission.findex.domain.indexinfo.repository.IndexInfoRepository;
 import com.sprint.mission.findex.domain.syncjob.entity.JobResult;
@@ -9,12 +10,12 @@ import com.sprint.mission.findex.domain.syncjob.repository.SyncJobRepository;
 import com.sprint.mission.findex.domain.indexdata.repository.IndexDataRepository;
 import com.sprint.mission.findex.domain.indexdata.entity.IndexData;
 
-import com.sprint.mission.findex.domain.indexdata.mapper.IndexDataMapper;
 import com.sprint.mission.findex.domain.syncclient.client.KrxOpenApiClient;
 import com.sprint.mission.findex.domain.syncclient.dto.IndexDataApiResponse;
 
-import com.sprint.mission.findex.domain.syncjob.dto.SyncJobDto;
-import com.sprint.mission.findex.domain.syncjob.dto.CursorPageResponseSyncJobDto;
+import com.sprint.mission.findex.domain.syncjob.dto.SyncJobResponse;
+import com.sprint.mission.findex.domain.syncjob.dto.SyncJobSearchCondition;
+import com.sprint.mission.findex.global.common.dto.CursorPageResponse;
 import java.time.Instant;
 import org.springframework.data.domain.PageRequest;
 
@@ -91,33 +92,37 @@ public class SyncJobServiceImpl implements SyncJobService {
 
   @Override
   @Transactional(readOnly = true)
-  public List<SyncJobDto> getSyncJobHistory(
-      CursorPageResponseSyncJobDto condition,
-      UUID idAfter,
-      String cursor,
-      String sortField,
-      String sortDirection,
+  public CursorPageResponse<SyncJobResponse> getSyncJobHistory(
+      SyncJobSearchCondition condition,
+      UUID cursor,
       int size) {
-
-    Instant lastJobTime = null;
-    if (cursor != null && !cursor.isBlank()) {
-      lastJobTime = Instant.parse(cursor);
-    }
 
     PageRequest pageRequest = PageRequest.of(0, size + 1);
 
-    List<SyncJob> syncJobs = syncJobRepository.searchSyncJobs(condition, lastJobTime, idAfter, pageRequest);
+    List<SyncJob> syncJobs = syncJobRepository.searchSyncJobs(condition, cursor, pageRequest);
 
     boolean hasNext = syncJobs.size() > size;
-    if (hasNext) {
-      syncJobs.remove(size);
-    }
 
-    List<SyncJobDto> responseList = syncJobs.stream()
-        .map(SyncJobDto::from)
+    List<SyncJobResponse> content = syncJobs.stream()
+        .limit(size)
+        .map(SyncJobResponse::from)
         .toList();
 
-    return responseList;
+    UUID nextCursor = null;
+
+    if (!content.isEmpty()) {
+      SyncJobResponse lastElement = content.get(content.size() - 1);
+      nextCursor = lastElement.id();
+    }
+
+    return CursorPageResponse.of(
+        content,
+        nextCursor,
+        null,
+        size,
+        null,
+        hasNext
+    );
   }
 
   @Transactional
