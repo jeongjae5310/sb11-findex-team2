@@ -10,7 +10,7 @@ import java.time.LocalDate;
 import java.util.UUID;
 
 @Schema(name = "SyncJobDto", description = "연동 작업 DTO")
-public record SyncJobDto(
+public record SyncJobResponse(
     UUID id,
     JobType jobType,
     UUID indexInfoId,
@@ -19,8 +19,8 @@ public record SyncJobDto(
     Instant jobTime,
     JobResult result
 ) {
-  public static SyncJobDto from(SyncJob syncJob) {
-    return new SyncJobDto(
+  public static SyncJobResponse from(SyncJob syncJob) {
+    return new SyncJobResponse(
         syncJob.getId(),
         syncJob.getJobType(),
         syncJob.getIndexInfo().getId(),
