@@ -1,6 +1,6 @@
 package com.sprint.mission.findex.domain.syncjob.repository;
 
-import com.sprint.mission.findex.domain.syncjob.dto.CursorPageResponseSyncJobDto;
+import com.sprint.mission.findex.domain.syncjob.dto.SyncJobSearchCondition;
 import com.sprint.mission.findex.domain.syncjob.entity.JobType;
 import com.sprint.mission.findex.domain.syncjob.entity.SyncJob;
 import org.springframework.data.domain.Pageable;
@@ -8,7 +8,6 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
-import java.time.Instant;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
@@ -26,19 +25,19 @@ public interface SyncJobRepository extends JpaRepository<SyncJob, UUID> {
       "LEFT JOIN FETCH s.indexInfo " +
       "WHERE (:#{#condition.jobType} IS NULL OR s.jobType = :#{#condition.jobType}) " +
       "AND (:#{#condition.indexInfoId} IS NULL OR s.indexInfo.id = :#{#condition.indexInfoId}) " +
-      "AND (:#{#condition.result} IS NULL OR s.result = :#{#condition.result}) " +
-      "AND (:#{#condition.startDate} IS NULL OR s.targetDate >= :#{#condition.startDate}) " +
-      "AND (:#{#condition.endDate} IS NULL OR s.targetDate <= :#{#condition.endDate}) " +
+      "AND (:#{#condition.status} IS NULL OR s.result = :#{#condition.status}) " +
+      "AND (:#{#condition.baseDateFrom} IS NULL OR s.targetDate >= :#{#condition.baseDateFrom}) " +
+      "AND (:#{#condition.baseDateTo} IS NULL OR s.targetDate <= :#{#condition.baseDateTo}) " +
       "AND (:#{#condition.worker} IS NULL OR s.worker LIKE %:#{#condition.worker}%) " +
-      "AND (:lastJobTime IS NULL OR s.jobTime < :lastJobTime " +
-      "OR (s.jobTime = :lastJobTime AND s.id < :lastId)) " +
+      "AND (:#{#condition.jobTimeFrom} IS NULL OR s.jobTime >= :#{#condition.jobTimeFrom}) " +
+      "AND (:#{#condition.jobTimeTo} IS NULL OR s.jobTime <= :#{#condition.jobTimeTo}) " +
+      "AND (:cursor IS NULL OR " +
+      "     s.jobTime < (SELECT sub.jobTime FROM SyncJob sub WHERE sub.id = :cursor) OR " +
+      "     (s.jobTime = (SELECT sub.jobTime FROM SyncJob sub WHERE sub.id = :cursor) AND s.id < :cursor)) " +
       "ORDER BY s.jobTime DESC, s.id DESC")
   List<SyncJob> searchSyncJobs(
-      @Param("condition") CursorPageResponseSyncJobDto condition,
-      @Param("lastJobTime") Instant lastJobTime,
-      @Param("lastId") UUID lastId,
+      @Param("condition") SyncJobSearchCondition condition,
+      @Param("cursor") UUID cursor,
       Pageable pageable
   );
 }
-
-
