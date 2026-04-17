@@ -6,7 +6,7 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.util.UUID;
 
-// 연동 이력 검색 필터용
+// 연동 이력 검색
 public record CursorPageResponseSyncJobDto(
     JobType jobType,
     UUID indexInfoId,
