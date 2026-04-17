@@ -67,17 +67,25 @@ public class SyncJobServiceImpl implements SyncJobService {
 
         int dataSize = (externalDataList != null) ? externalDataList.size() : 0;
 
+        LocalDate actualTargetDate = baseDateTo;
+
         if (dataSize > 0) {
           List<IndexData> indexDataList = indexDataMapper.toEntityList(externalDataList, indexInfo);
           saveData(indexDataList);
+
+          actualTargetDate = indexDataList.stream()
+              .map(IndexData::getBaseDate)
+              .max(LocalDate::compareTo)
+              .orElse(baseDateTo);
         }
 
         String logMessage = isSingleDay
             ? null
             : String.format("범위 연동: %s ~ %s (%d건)", baseDateFrom, baseDateTo, dataSize);
 
-        saveSyncJobHistory(indexInfo, JobType.INDEX_DATA, baseDateTo, workerIp, JobResult.SUCCESS, logMessage);
-        log.info("[Sync 성공] 지수: {}, 날짜/범위: {} ~ {} ({}건)", indexInfo.getIndexName(), baseDateFrom, baseDateTo, dataSize);
+        saveSyncJobHistory(indexInfo, JobType.INDEX_DATA, actualTargetDate, workerIp, JobResult.SUCCESS, logMessage);
+        log.info("[Sync 성공] 지수: {}, 요청범위: {} ~ {} -> 실제연동기준일: {} ({}건)",
+            indexInfo.getIndexName(), baseDateFrom, baseDateTo, actualTargetDate, dataSize);
 
       } catch (Exception e) {
         String errorLog = isSingleDay
