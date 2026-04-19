@@ -11,14 +11,10 @@ import com.sprint.mission.findex.domain.syncjob.entity.JobType;
 import com.sprint.mission.findex.domain.syncjob.entity.SyncJob;
 import com.sprint.mission.findex.global.common.dto.CursorPageResponse;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Repository;
 
 import java.time.Instant;
 import java.time.LocalDate;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -36,9 +32,8 @@ public class SyncJobRepositoryImpl implements SyncJobCustomRepository {
       SyncJobSearchCondition condition, String cursor, UUID idAfter,
       String sortField, String sortDirection, int size) {
 
-    Sort.Direction direction = "asc".equalsIgnoreCase(sortDirection) ? Sort.Direction.ASC : Sort.Direction.DESC;
     String activeSortField = (sortField != null && !sortField.isBlank()) ? sortField : "jobTime";
-    PageRequest pageRequest = PageRequest.of(0, size + 1, Sort.by(direction, activeSortField));
+    boolean isAsc = "asc".equalsIgnoreCase(sortDirection);
 
     List<SyncJob> syncJobs = queryFactory
         .selectFrom(syncJob)
@@ -52,10 +47,10 @@ public class SyncJobRepositoryImpl implements SyncJobCustomRepository {
             containsWorker(condition.worker()),
             goeJobTimeFrom(condition.jobTimeFrom()),
             loeJobTimeTo(condition.jobTimeTo()),
-            getCursorCondition(cursor, idAfter, pageRequest)
+            getCursorCondition(cursor, idAfter, activeSortField, isAsc)
         )
-        .orderBy(getOrderSpecifiers(pageRequest))
-        .limit(pageRequest.getPageSize())
+        .orderBy(getOrderSpecifiers(activeSortField, isAsc))
+        .limit(size + 1L)
         .fetch();
 
     boolean hasNext = syncJobs.size() > size;
@@ -89,14 +84,10 @@ public class SyncJobRepositoryImpl implements SyncJobCustomRepository {
     );
   }
 
-  private BooleanExpression getCursorCondition(String cursor, UUID idAfter, Pageable pageable) {
+  private BooleanExpression getCursorCondition(String cursor, UUID idAfter, String sortField, boolean isAsc) {
     if (cursor == null || cursor.isBlank() || idAfter == null) return null;
 
-    Sort.Order order = pageable.getSort().isSorted() ? pageable.getSort().iterator().next() : Sort.Order.desc("jobTime");
-    String property = order.getProperty();
-    boolean isAsc = order.isAscending();
-
-    if ("targetDate".equals(property)) {
+    if ("targetDate".equals(sortField)) {
       LocalDate targetDateCursor = LocalDate.parse(cursor);
       if (isAsc) {
         return syncJob.targetDate.gt(targetDateCursor)
@@ -117,24 +108,16 @@ public class SyncJobRepositoryImpl implements SyncJobCustomRepository {
     }
   }
 
-  private OrderSpecifier<?>[] getOrderSpecifiers(Pageable pageable) {
-    List<OrderSpecifier<?>> orders = new ArrayList<>();
-    if (pageable.getSort().isSorted()) {
-      for (Sort.Order order : pageable.getSort()) {
-        Order direction = order.isAscending() ? Order.ASC : Order.DESC;
-        switch (order.getProperty()) {
-          case "targetDate" -> orders.add(new OrderSpecifier<>(direction, syncJob.targetDate));
-          case "jobTime" -> orders.add(new OrderSpecifier<>(direction, syncJob.jobTime));
-        }
-      }
-    } else {
-      orders.add(new OrderSpecifier<>(Order.DESC, syncJob.jobTime));
-    }
+  private OrderSpecifier<?>[] getOrderSpecifiers(String sortField, boolean isAsc) {
+    Order direction = isAsc ? Order.ASC : Order.DESC;
 
-    Order tieBreaker = orders.isEmpty() || orders.get(0).getOrder() == Order.DESC ? Order.DESC : Order.ASC;
-    orders.add(new OrderSpecifier<>(tieBreaker, syncJob.id));
+    OrderSpecifier<?> primaryOrder = "targetDate".equals(sortField)
+        ? new OrderSpecifier<>(direction, syncJob.targetDate)
+        : new OrderSpecifier<>(direction, syncJob.jobTime);
 
-    return orders.toArray(new OrderSpecifier[0]);
+    OrderSpecifier<?> secondaryOrder = new OrderSpecifier<>(direction, syncJob.id);
+
+    return new OrderSpecifier[]{primaryOrder, secondaryOrder};
   }
 
   private BooleanExpression eqJobType(JobType jobType) { return jobType != null ? syncJob.jobType.eq(jobType) : null; }
