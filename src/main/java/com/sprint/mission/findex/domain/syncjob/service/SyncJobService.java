@@ -107,41 +107,7 @@ public class SyncJobService {
       String sortDirection,
       int size) {
 
-    Sort.Direction direction = "asc".equalsIgnoreCase(sortDirection) ? Sort.Direction.ASC : Sort.Direction.DESC;
-    String activeSortField = (sortField != null && !sortField.isBlank()) ? sortField : "jobTime";
-    PageRequest pageRequest = PageRequest.of(0, size + 1, Sort.by(direction, activeSortField));
-
-    List<SyncJob> syncJobs = syncJobRepository.searchSyncJobs(condition, cursor, idAfter, pageRequest);
-
-    boolean hasNext = syncJobs.size() > size;
-
-    List<SyncJobResponse> content = syncJobs.stream()
-        .limit(size)
-        .map(SyncJobResponse::from)
-        .toList();
-
-    String nextCursor = null;
-    UUID nextIdAfter = null;
-
-    if (!content.isEmpty()) {
-      SyncJobResponse lastElement = content.get(content.size() - 1);
-      nextIdAfter = lastElement.id();
-
-      if ("targetDate".equals(activeSortField)) {
-        nextCursor = lastElement.targetDate().toString();
-      } else {
-        nextCursor = lastElement.jobTime().toString();
-      }
-    }
-
-    return CursorPageResponse.of(
-        content,
-        nextCursor,
-        nextIdAfter,
-        size,
-        null,
-        hasNext
-    );
+    return syncJobRepository.searchSyncJobPage(condition, cursor, idAfter, sortField, sortDirection, size);
   }
 
   @Transactional

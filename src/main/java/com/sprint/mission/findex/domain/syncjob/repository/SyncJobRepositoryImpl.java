@@ -4,11 +4,14 @@ import com.querydsl.core.types.Order;
 import com.querydsl.core.types.OrderSpecifier;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.impl.JPAQueryFactory;
+import com.sprint.mission.findex.domain.syncjob.dto.SyncJobResponse;
 import com.sprint.mission.findex.domain.syncjob.dto.SyncJobSearchCondition;
 import com.sprint.mission.findex.domain.syncjob.entity.JobResult;
 import com.sprint.mission.findex.domain.syncjob.entity.JobType;
 import com.sprint.mission.findex.domain.syncjob.entity.SyncJob;
+import com.sprint.mission.findex.global.common.dto.CursorPageResponse;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Repository;
@@ -29,9 +32,15 @@ public class SyncJobRepositoryImpl implements SyncJobCustomRepository {
   private final JPAQueryFactory queryFactory;
 
   @Override
-  public List<SyncJob> searchSyncJobs(SyncJobSearchCondition condition, String cursor, UUID idAfter, Pageable pageable) {
+  public CursorPageResponse<SyncJobResponse> searchSyncJobPage(
+      SyncJobSearchCondition condition, String cursor, UUID idAfter,
+      String sortField, String sortDirection, int size) {
 
-    return queryFactory
+    Sort.Direction direction = "asc".equalsIgnoreCase(sortDirection) ? Sort.Direction.ASC : Sort.Direction.DESC;
+    String activeSortField = (sortField != null && !sortField.isBlank()) ? sortField : "jobTime";
+    PageRequest pageRequest = PageRequest.of(0, size + 1, Sort.by(direction, activeSortField));
+
+    List<SyncJob> syncJobs = queryFactory
         .selectFrom(syncJob)
         .leftJoin(syncJob.indexInfo, indexInfo).fetchJoin()
         .where(
@@ -43,11 +52,41 @@ public class SyncJobRepositoryImpl implements SyncJobCustomRepository {
             containsWorker(condition.worker()),
             goeJobTimeFrom(condition.jobTimeFrom()),
             loeJobTimeTo(condition.jobTimeTo()),
-            getCursorCondition(cursor, idAfter, pageable)
+            getCursorCondition(cursor, idAfter, pageRequest)
         )
-        .orderBy(getOrderSpecifiers(pageable))
-        .limit(pageable.getPageSize())
+        .orderBy(getOrderSpecifiers(pageRequest))
+        .limit(pageRequest.getPageSize())
         .fetch();
+
+    boolean hasNext = syncJobs.size() > size;
+
+    List<SyncJobResponse> content = syncJobs.stream()
+        .limit(size)
+        .map(SyncJobResponse::from)
+        .toList();
+
+    String nextCursor = null;
+    UUID nextIdAfter = null;
+
+    if (!content.isEmpty()) {
+      SyncJobResponse lastElement = content.get(content.size() - 1);
+      nextIdAfter = lastElement.id();
+
+      if ("targetDate".equals(activeSortField)) {
+        nextCursor = lastElement.targetDate().toString();
+      } else {
+        nextCursor = lastElement.jobTime().toString();
+      }
+    }
+
+    return CursorPageResponse.of(
+        content,
+        nextCursor,
+        nextIdAfter,
+        size,
+        null,
+        hasNext
+    );
   }
 
   private BooleanExpression getCursorCondition(String cursor, UUID idAfter, Pageable pageable) {
