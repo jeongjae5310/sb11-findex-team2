@@ -10,6 +10,7 @@ import com.sprint.mission.findex.domain.syncjob.entity.JobResult;
 import com.sprint.mission.findex.domain.syncjob.entity.JobType;
 import com.sprint.mission.findex.domain.syncjob.entity.SyncJob;
 import com.sprint.mission.findex.global.common.dto.CursorPageResponse;
+import java.time.format.DateTimeParseException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
@@ -88,7 +89,13 @@ public class SyncJobRepositoryImpl implements SyncJobCustomRepository {
     if (cursor == null || cursor.isBlank() || idAfter == null) return null;
 
     if ("targetDate".equals(sortField)) {
-      LocalDate targetDateCursor = LocalDate.parse(cursor);
+      LocalDate targetDateCursor;
+      try {
+        targetDateCursor = LocalDate.parse(cursor);
+      } catch (DateTimeParseException e) {
+        throw new IllegalArgumentException("잘못된 커서 형식입니다: " + cursor, e);
+      }
+
       if (isAsc) {
         return syncJob.targetDate.gt(targetDateCursor)
             .or(syncJob.targetDate.eq(targetDateCursor).and(syncJob.id.gt(idAfter)));
@@ -97,7 +104,13 @@ public class SyncJobRepositoryImpl implements SyncJobCustomRepository {
             .or(syncJob.targetDate.eq(targetDateCursor).and(syncJob.id.lt(idAfter)));
       }
     } else {
-      Instant jobTimeCursor = Instant.parse(cursor);
+      Instant jobTimeCursor;
+      try {
+        jobTimeCursor = Instant.parse(cursor);
+      } catch (DateTimeParseException e) {
+        throw new IllegalArgumentException("잘못된 커서 형식입니다: %s".formatted(cursor), e);
+      }
+
       if (isAsc) {
         return syncJob.jobTime.gt(jobTimeCursor)
             .or(syncJob.jobTime.eq(jobTimeCursor).and(syncJob.id.gt(idAfter)));
