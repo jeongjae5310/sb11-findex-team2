@@ -14,5 +14,6 @@ public interface SyncJobMapper {
   @Mapping(target = "worker", source = "workerIp")
   @Mapping(target = "errorMessage", source = "logMessage")
   SyncJob toEntity(IndexInfo indexInfo, JobType jobType, LocalDate targetDate, String workerIp, JobResult result, String logMessage);
+  @Mapping(target = "indexInfoId", source = "indexInfo.id")
   SyncJobResponse toResponse(SyncJob syncJob);
 }
