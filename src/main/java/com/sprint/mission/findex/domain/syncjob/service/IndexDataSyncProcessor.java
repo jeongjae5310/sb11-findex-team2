@@ -8,6 +8,7 @@ import com.sprint.mission.findex.domain.syncjob.entity.JobResult;
 import com.sprint.mission.findex.domain.syncjob.entity.JobType;
 import com.sprint.mission.findex.domain.syncjob.entity.SyncJob;
 import com.sprint.mission.findex.domain.syncjob.repository.SyncJobRepository;
+import com.sprint.mission.findex.domain.syncjob.mapper.SyncJobMapper; // 🚨 본인 패키지 경로에 맞게 확인해줘!
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -21,25 +22,24 @@ public class IndexDataSyncProcessor {
 
   private final IndexDataRepository indexDataRepository;
   private final SyncJobRepository syncJobRepository;
+  private final SyncJobMapper syncJobMapper;
 
   @Transactional
   public SyncJobResponse saveIndexDataAndHistory(
-      List<IndexData> indexDataList, IndexInfo indexInfo, LocalDate targetDate,
-      String workerIp, String logMessage) {
+      List<IndexData> indexDataList,
+      IndexInfo indexInfo,
+      LocalDate targetDate,
+      String workerIp,
+      String logMessage) {
 
     if (indexDataList != null && !indexDataList.isEmpty()) {
       indexDataRepository.saveAll(indexDataList);
     }
 
-    SyncJob syncJob = SyncJob.builder()
-        .indexInfo(indexInfo)
-        .jobType(JobType.INDEX_DATA)
-        .targetDate(targetDate)
-        .worker(workerIp)
-        .result(JobResult.SUCCESS)
-        .errorMessage(logMessage)
-        .build();
+    SyncJob syncJob = syncJobMapper.toEntity(
+        indexInfo, JobType.INDEX_DATA, targetDate, workerIp, JobResult.SUCCESS, logMessage
+    );
 
-    return SyncJobResponse.from(syncJobRepository.save(syncJob));
+    return syncJobMapper.toResponse(syncJobRepository.save(syncJob));
   }
 }
