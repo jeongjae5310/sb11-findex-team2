@@ -154,7 +154,7 @@ public class SyncJobCustomRepositoryImpl implements SyncJobCustomRepository {
 
   private BooleanExpression loeJobTimeTo(LocalDate jobTimeTo) {
     if (jobTimeTo == null) return null;
-    Instant toInstant = jobTimeTo.atTime(23, 59, 59).atZone(KST_ZONE).toInstant();
-    return syncJob.jobTime.loe(toInstant);
+    Instant nextDayStart = jobTimeTo.plusDays(1).atStartOfDay(KST_ZONE).toInstant();
+    return syncJob.jobTime.lt(nextDayStart);
   }
 }
