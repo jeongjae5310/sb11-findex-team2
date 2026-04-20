@@ -10,6 +10,7 @@ import com.sprint.mission.findex.domain.syncjob.entity.JobResult;
 import com.sprint.mission.findex.domain.syncjob.entity.JobType;
 import com.sprint.mission.findex.domain.syncjob.entity.SyncJob;
 import com.sprint.mission.findex.global.common.dto.CursorPageResponse;
+import java.time.ZoneId;
 import java.time.format.DateTimeParseException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
@@ -27,6 +28,8 @@ import static com.sprint.mission.findex.domain.syncjob.entity.QSyncJob.syncJob;
 public class SyncJobRepositoryImpl implements SyncJobCustomRepository {
 
   private final JPAQueryFactory queryFactory;
+
+  private static final ZoneId KST_ZONE = ZoneId.of("Asia/Seoul");
 
   @Override
   public CursorPageResponse<SyncJobResponse> searchSyncJobPage(
@@ -141,4 +144,16 @@ public class SyncJobRepositoryImpl implements SyncJobCustomRepository {
   private BooleanExpression containsWorker(String worker) { return worker != null && !worker.isBlank() ? syncJob.worker.contains(worker) : null; }
   private BooleanExpression goeJobTimeFrom(Instant jobTimeFrom) { return jobTimeFrom != null ? syncJob.jobTime.goe(jobTimeFrom) : null; }
   private BooleanExpression loeJobTimeTo(Instant jobTimeTo) { return jobTimeTo != null ? syncJob.jobTime.loe(jobTimeTo) : null; }
+
+  private BooleanExpression goeJobTimeFrom(LocalDate jobTimeFrom) {
+    if (jobTimeFrom == null) return null;
+    Instant fromInstant = jobTimeFrom.atStartOfDay(KST_ZONE).toInstant();
+    return syncJob.jobTime.goe(fromInstant);
+  }
+
+  private BooleanExpression loeJobTimeTo(LocalDate jobTimeTo) {
+    if (jobTimeTo == null) return null;
+    Instant toInstant = jobTimeTo.atTime(23, 59, 59).atZone(KST_ZONE).toInstant();
+    return syncJob.jobTime.loe(toInstant);
+  }
 }
