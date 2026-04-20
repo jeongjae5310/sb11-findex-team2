@@ -1,4 +1,4 @@
-package com.sprint.mission.findex.domain.syncjob.repository;
+package com.sprint.mission.findex.domain.syncjob.repository.querydsl;
 
 import com.sprint.mission.findex.domain.syncjob.dto.SyncJobResponse;
 import com.sprint.mission.findex.domain.syncjob.dto.SyncJobQueryCondition;

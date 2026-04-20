@@ -1,4 +1,4 @@
-package com.sprint.mission.findex.domain.syncjob.repository;
+package com.sprint.mission.findex.domain.syncjob.repository.querydsl.impl;
 
 import com.querydsl.core.types.Order;
 import com.querydsl.core.types.OrderSpecifier;
@@ -9,6 +9,7 @@ import com.sprint.mission.findex.domain.syncjob.dto.SyncJobQueryCondition;
 import com.sprint.mission.findex.domain.syncjob.entity.JobResult;
 import com.sprint.mission.findex.domain.syncjob.entity.JobType;
 import com.sprint.mission.findex.domain.syncjob.entity.SyncJob;
+import com.sprint.mission.findex.domain.syncjob.repository.querydsl.SyncJobCustomRepository;
 import com.sprint.mission.findex.global.common.dto.CursorPageResponse;
 import java.time.ZoneId;
 import java.time.format.DateTimeParseException;
@@ -25,7 +26,7 @@ import static com.sprint.mission.findex.domain.syncjob.entity.QSyncJob.syncJob;
 
 @Repository
 @RequiredArgsConstructor
-public class SyncJobRepositoryImpl implements SyncJobCustomRepository {
+public class SyncJobCustomRepositoryImpl implements SyncJobCustomRepository {
 
   private final JPAQueryFactory queryFactory;
 
