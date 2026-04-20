@@ -8,7 +8,7 @@ import com.sprint.mission.findex.domain.syncjob.entity.JobResult;
 import com.sprint.mission.findex.domain.syncjob.entity.JobType;
 import com.sprint.mission.findex.domain.syncjob.entity.SyncJob;
 import com.sprint.mission.findex.domain.syncjob.repository.SyncJobRepository;
-import com.sprint.mission.findex.domain.syncjob.mapper.SyncJobMapper; // 🚨 본인 패키지 경로에 맞게 확인해줘!
+import com.sprint.mission.findex.domain.syncjob.mapper.SyncJobMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
