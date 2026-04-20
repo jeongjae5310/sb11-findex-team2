@@ -5,7 +5,7 @@ import com.querydsl.core.types.OrderSpecifier;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import com.sprint.mission.findex.domain.syncjob.dto.SyncJobResponse;
-import com.sprint.mission.findex.domain.syncjob.dto.SyncJobSearchCondition;
+import com.sprint.mission.findex.domain.syncjob.dto.SyncJobQueryCondition;
 import com.sprint.mission.findex.domain.syncjob.entity.JobResult;
 import com.sprint.mission.findex.domain.syncjob.entity.JobType;
 import com.sprint.mission.findex.domain.syncjob.entity.SyncJob;
@@ -30,7 +30,7 @@ public class SyncJobRepositoryImpl implements SyncJobCustomRepository {
 
   @Override
   public CursorPageResponse<SyncJobResponse> searchSyncJobPage(
-      SyncJobSearchCondition condition, String cursor, UUID idAfter,
+      SyncJobQueryCondition condition, String cursor, UUID idAfter,
       String sortField, String sortDirection, int size) {
 
     String activeSortField = (sortField != null && !sortField.isBlank()) ? sortField : "jobTime";

@@ -9,7 +9,7 @@ import java.time.LocalDate;
 import java.util.UUID;
 
 @Schema(description = "연동 이력 검색 필터")
-public record SyncJobSearchCondition(
+public record SyncJobQueryCondition(
 
     @Schema(description = "연동 작업 유형 (INDEX_INFO, INDEX_DATA)")
     JobType jobType,
