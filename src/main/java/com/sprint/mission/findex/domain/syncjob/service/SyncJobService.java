@@ -191,7 +191,14 @@ public class SyncJobService {
 
         log.error("[IndexData Sync 부분 실패] 지수: {} | {}", indexInfo.getIndexName(), errorLog);
 
-        results.add(saveSyncJobHistory(indexInfo, JobType.INDEX_DATA, baseDateTo, workerIp, JobResult.FAILED, errorLog));
+        try {
+          results.add(saveSyncJobHistory(indexInfo, JobType.INDEX_DATA, baseDateTo, workerIp, JobResult.FAILED, errorLog));
+        } catch (Exception historyEx) {
+          String historyError = (historyEx.getMessage() != null)
+              ? historyEx.getMessage()
+              : historyEx.getClass().getSimpleName();
+          log.error("[IndexData Sync 실패 이력 저장 실패] 지수: {} | 사유: {}", indexInfo.getIndexName(), historyError);
+        }
       }
     }
     return results;
