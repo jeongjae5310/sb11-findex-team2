@@ -107,8 +107,18 @@ public class SyncJobService {
           log.info("[IndexInfo Sync 성공-신규] 지수: {}", response.idxNm());
         } catch (Exception e) {
           String errorMsg = (e.getMessage() != null) ? e.getMessage() : e.getClass().getSimpleName();
-          log.error("[IndexInfo Sync 비정상 흐름] 워크플로우 위반 가능성 탐지 지수명: {} | 사유: {} | 조치: 해당 지수의 사전 등록 여부 및 마스터 데이터 확인 필요",
-              response.idxNm(), errorMsg);
+
+          Optional<IndexInfo> retryExisting = indexInfoRepository.findByIndexClassificationAndIndexName(
+              response.idxCsf(), response.idxNm()
+          );
+
+          if (retryExisting.isPresent()) {
+            log.error("[IndexInfo Sync 실패-신규(충돌 의심)] 지수: {}, 사유: {}", response.idxNm(), errorMsg);
+            results.add(saveSyncJobHistory(retryExisting.get(), JobType.INDEX_INFO, targetDate, workerIp, JobResult.FAILED, "신규 생성 중 예외 발생 (Unique 제약조건 충돌 의심): " + errorMsg));
+          } else {
+            log.error("[IndexInfo Sync 비정상 흐름] 워크플로우 위반 가능성 탐지 지수명: {} | 사유: {} | 조치: 해당 지수의 사전 등록 여부 및 마스터 데이터 확인 필요",
+                response.idxNm(), errorMsg);
+          }
         }
       } else {
         IndexInfo indexInfo = existing.get();
