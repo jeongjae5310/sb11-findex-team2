@@ -196,18 +196,15 @@ public class SyncJobService {
         String safeErrorMsg = (e.getMessage() != null) ? e.getMessage() : e.getClass().getSimpleName();
 
         String errorLog = isSingleDay
-            ? String.format("[단건 연동 부분 실패] 개별 트랜잭션 격리 처리됨 | 사유: %s", safeErrorMsg)
-            : String.format("[범위 연동 부분 실패] 기간: %s ~ %s | 개별 트랜잭션 격리 처리됨 | 사유: %s", baseDateFrom, baseDateTo, safeErrorMsg);
+            ? String.format("[단건 연동 실패] 해당 지수 외 정상 처리됨 | 사유: %s", safeErrorMsg)
+            : String.format("[범위 연동 실패] 기간: %s ~ %s | 타 데이터 영향 없음 | 사유: %s", baseDateFrom, baseDateTo, safeErrorMsg);
 
         log.error("[IndexData Sync 부분 실패] 지수: {} | {}", indexInfo.getIndexName(), errorLog);
 
         try {
           results.add(saveSyncJobHistory(indexInfo, JobType.INDEX_DATA, baseDateTo, workerIp, JobResult.FAILED, errorLog));
         } catch (Exception historyEx) {
-          String historyError = (historyEx.getMessage() != null)
-              ? historyEx.getMessage()
-              : historyEx.getClass().getSimpleName();
-          log.error("[IndexData Sync 실패 이력 저장 실패] 지수: {} | 사유: {}", indexInfo.getIndexName(), historyError);
+          log.error("[IndexData Sync 실패 이력 저장 실패] 지수: {} | 사유: {}", indexInfo.getIndexName(), historyEx.getMessage());
         }
       }
     }
