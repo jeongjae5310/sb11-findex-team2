@@ -7,6 +7,7 @@ import jakarta.validation.constraints.AssertTrue;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.UUID;
+import org.springframework.format.annotation.DateTimeFormat;
 
 @Schema(description = "연동 이력 검색 필터")
 public record SyncJobQueryCondition(
@@ -27,9 +28,11 @@ public record SyncJobQueryCondition(
     String worker,
 
     @Schema(description = "작업 일시 (부터)", example = "2024-04-01")
+    @DateTimeFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
     LocalDate jobTimeFrom,
 
     @Schema(description = "작업 일시 (까지)", example = "2024-04-10")
+    @DateTimeFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
     LocalDate jobTimeTo,
 
     @Schema(description = "작업 상태 (SUCCESS, FAILED)")
